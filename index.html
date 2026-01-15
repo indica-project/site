@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Галерея</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Моя галерея</h1>
+    </header>
+
+    <main>
+        <div class="gallery">
+            {% for file in files %}
+                {% if file.lower().endswith(('.mp4')) %}
+                    <video src="{{ url_for('static', filename='images/' ~ file) }}" controls></video>
+                {% else %}
+                    <img src="{{ url_for('static', filename='images/' ~ file) }}" alt="Галерея">
+                {% endif %}
+            {% endfor %}
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
