@@ -3,7 +3,7 @@ import os
 
 app = Flask(__name__)
 
-IMAGE_FOLDER = "static\images"
+IMAGE_FOLDER = 'static/images'
 
 @app.route('/')
 def index():
@@ -16,5 +16,6 @@ def index():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
