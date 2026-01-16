@@ -7,15 +7,15 @@ IMAGE_FOLDER = 'static/images'
 
 @app.route('/')
 def index():
-    files = os.listdir(IMAGE_FOLDER)
-    files = [
-        f for f in files
-        if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.mp4'))
-    ]
+    files = []
+    for filename in os.listdir(IMAGE_FOLDER):
+        if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.mp4')):
+            files.append(filename)
+    
+    # Сортируем по времени создания (новые сверху)
+    files.sort(key=lambda x: os.path.getctime(os.path.join(IMAGE_FOLDER, x)), reverse=True)
+    
     return render_template('index.html', files=files)
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
