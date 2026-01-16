@@ -13,9 +13,10 @@ def index():
             files.append(filename)
     
     # Сортируем по времени создания (новые сверху)
-    files.sort(key=lambda x: os.path.getctime(os.path.join(IMAGE_FOLDER, x)), reverse=True)
+    files.sort(key=lambda x: os.path.getctime(os.path.join(IMAGE_FOLDER, x)), reverse=False)
     
     return render_template('index.html', files=files)
 
 if __name__ == '__main__':
     app.run(debug=True)
+
