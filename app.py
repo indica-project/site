@@ -4,7 +4,7 @@ import math
 
 app = Flask(__name__)
 
-IMAGE_FOLDER = r'C:\Users\callm\OneDrive\Indica\Site\v3\static\images'
+IMAGE_FOLDER = 'static\images'
 ITEMS_PER_PAGE = 20
 
 def get_sorted_files():
@@ -65,3 +65,4 @@ def videos():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
