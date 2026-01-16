@@ -1,0 +1,37 @@
+<div class="pagination">
+    <!-- First page -->
+    {% if current_page > 3 %}
+    <a href="{{ url_for(page_type) }}?page=1" class="page-link arrow" title="First page">««</a>
+    {% endif %}
+
+    <!-- Previous page -->
+    {% if current_page > 1 %}
+    <a href="{{ url_for(page_type) }}?page={{ current_page - 1 }}" class="page-link arrow" title="Previous page">‹</a>
+    {% else %}
+    <span class="page-link arrow disabled">‹</span>
+    {% endif %}
+
+    <!-- Page numbers -->
+    {% set start_page = [1, current_page - 2]|max %}
+    {% set end_page = [total_pages + 1, current_page + 3]|min %}
+    
+    {% for page_num in range(start_page, end_page) %}
+        {% if page_num == current_page %}
+            <span class="page-link active">{{ page_num }}</span>
+        {% else %}
+            <a href="{{ url_for(page_type) }}?page={{ page_num }}" class="page-link">{{ page_num }}</a>
+        {% endif %}
+    {% endfor %}
+
+    <!-- Next page -->
+    {% if current_page < total_pages %}
+    <a href="{{ url_for(page_type) }}?page={{ current_page + 1 }}" class="page-link arrow" title="Next page">›</a>
+    {% else %}
+    <span class="page-link arrow disabled">›</span>
+    {% endif %}
+
+    <!-- Last page -->
+    {% if current_page < total_pages - 2 %}
+    <a href="{{ url_for(page_type) }}?page={{ total_pages }}" class="page-link arrow" title="Last page">»»</a>
+    {% endif %}
+</div>
