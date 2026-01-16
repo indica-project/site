@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -31,7 +31,7 @@
             padding: 2rem;
         }
 
-        /* Фоновые эффекты */
+        /* Background effects */
         .bg-effects {
             position: absolute;
             top: 0;
@@ -46,102 +46,91 @@
             position: absolute;
             border-radius: 50%;
             background: radial-gradient(circle, rgba(120, 119, 198, 0.3), transparent);
-            filter: blur(40px);
-            animation: float 15s infinite ease-in-out;
+            filter: blur(60px);
+            animation: float 20s infinite ease-in-out;
         }
 
         .circle-1 {
-            width: 300px;
-            height: 300px;
+            width: 400px;
+            height: 400px;
             top: 10%;
             left: 10%;
             animation-delay: 0s;
         }
 
         .circle-2 {
-            width: 400px;
-            height: 400px;
+            width: 500px;
+            height: 500px;
             bottom: 10%;
             right: 10%;
             background: radial-gradient(circle, rgba(198, 119, 198, 0.2), transparent);
-            animation-delay: -5s;
+            animation-delay: -7s;
         }
 
         .circle-3 {
-            width: 200px;
-            height: 200px;
+            width: 300px;
+            height: 300px;
             top: 50%;
             left: 80%;
             background: radial-gradient(circle, rgba(119, 198, 198, 0.2), transparent);
-            animation-delay: -10s;
+            animation-delay: -14s;
         }
 
-        /* Главный заголовок */
+        /* Main title */
         .main-title {
             position: relative;
             z-index: 2;
             text-align: center;
-            margin-bottom: 4rem;
+            margin-bottom: 5rem;
         }
 
         .indica-text {
             font-family: 'Playfair Display', serif;
-            font-size: 9vw;
+            font-size: 10vw;
             font-weight: 800;
             background: linear-gradient(45deg, #ff6ec7, #7873f5, #00d2ff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            letter-spacing: -2px;
+            text-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            letter-spacing: -3px;
             line-height: 0.9;
             margin-bottom: 1rem;
             position: relative;
             display: inline-block;
+            animation: glow 3s ease-in-out infinite alternate;
         }
 
-        .indica-text::after {
-            content: '';
-            position: absolute;
-            bottom: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 200px;
-            height: 4px;
-            background: linear-gradient(90deg, transparent, #ff6ec7, #00d2ff, transparent);
-            border-radius: 2px;
+        @keyframes glow {
+            from {
+                text-shadow: 0 15px 40px rgba(0, 0, 0, 0.4),
+                             0 0 20px rgba(255, 110, 199, 0.2);
+            }
+            to {
+                text-shadow: 0 15px 40px rgba(0, 0, 0, 0.4),
+                             0 0 30px rgba(255, 110, 199, 0.4),
+                             0 0 40px rgba(120, 115, 245, 0.3);
+            }
         }
 
-        .subtitle {
-            font-size: 1.5rem;
-            font-weight: 300;
-            letter-spacing: 8px;
-            text-transform: uppercase;
-            opacity: 0.8;
-            margin-top: 2rem;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        /* Навигация */
+        /* Navigation */
         .navigation {
             position: relative;
             z-index: 2;
             display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 2rem;
-            max-width: 1200px;
+            gap: 2.5rem;
+            max-width: 800px;
             margin: 0 auto;
         }
 
         .nav-card {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 2.5rem;
-            width: 320px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 25px;
+            padding: 3rem;
+            width: 350px;
             text-align: center;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
@@ -153,103 +142,97 @@
             content: '';
             position: absolute;
             top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.7s;
+        }
+
+        .nav-card:hover::before {
+            left: 100%;
         }
 
         .nav-card:hover {
-            transform: translateY(-10px) scale(1.02);
-            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-15px) scale(1.03);
+            background: rgba(255, 255, 255, 0.1);
             border-color: rgba(255, 255, 255, 0.3);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4),
-                        0 0 0 1px rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
 
         .nav-icon {
-            font-size: 3.5rem;
-            margin-bottom: 1.5rem;
+            font-size: 4rem;
+            margin-bottom: 2rem;
             display: block;
+            filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
         }
 
         .nav-title {
-            font-size: 1.8rem;
+            font-size: 2rem;
             font-weight: 600;
-            margin-bottom: 1rem;
-            color: #fff;
-        }
-
-        .nav-description {
-            font-size: 1rem;
-            opacity: 0.7;
-            line-height: 1.6;
             margin-bottom: 1.5rem;
-            color: rgba(255, 255, 255, 0.8);
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
         .nav-button {
             display: inline-block;
-            padding: 12px 32px;
+            padding: 15px 40px;
             background: linear-gradient(45deg, #ff6ec7, #7873f5);
             color: white;
             text-decoration: none;
             border-radius: 50px;
             font-weight: 600;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             transition: all 0.3s;
             border: none;
             cursor: pointer;
             position: relative;
             overflow: hidden;
+            font-size: 1.1rem;
+            text-transform: uppercase;
         }
 
-        .nav-button::before {
+        .nav-button::after {
             content: '';
             position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            top: -50%;
+            left: -60%;
+            width: 20%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(30deg);
             transition: left 0.5s;
         }
 
-        .nav-button:hover::before {
-            left: 100%;
+        .nav-button:hover::after {
+            left: 140%;
         }
 
         .nav-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 10px 20px rgba(120, 115, 245, 0.3);
+            transform: scale(1.08);
+            box-shadow: 0 15px 30px rgba(120, 115, 245, 0.4);
         }
 
-        /* Футер */
-        .footer {
-            position: absolute;
-            bottom: 2rem;
-            width: 100%;
-            text-align: center;
-            z-index: 2;
-            opacity: 0.5;
-            font-size: 0.9rem;
-            letter-spacing: 1px;
-        }
-
-        /* Анимации */
+        /* Animations */
         @keyframes float {
             0%, 100% {
-                transform: translateY(0) rotate(0deg);
+                transform: translateY(0) rotate(0deg) scale(1);
             }
-            50% {
-                transform: translateY(-20px) rotate(180deg);
+            33% {
+                transform: translateY(-30px) rotate(120deg) scale(1.1);
+            }
+            66% {
+                transform: translateY(20px) rotate(240deg) scale(0.9);
             }
         }
 
         @keyframes fadeInUp {
             from {
                 opacity: 0;
-                transform: translateY(30px);
+                transform: translateY(40px);
             }
             to {
                 opacity: 1;
@@ -270,40 +253,46 @@
             animation-delay: 0.4s;
         }
 
-        .delay-3 {
-            animation-delay: 0.6s;
-        }
-
-        /* Адаптивность */
-        @media (max-width: 768px) {
-            .indica-text {
-                font-size: 15vw;
-            }
-            
-            .subtitle {
-                font-size: 1.2rem;
-                letter-spacing: 4px;
-            }
-            
+        /* Responsive */
+        @media (max-width: 900px) {
             .navigation {
                 flex-direction: column;
+                gap: 2rem;
                 align-items: center;
-                gap: 1.5rem;
             }
             
             .nav-card {
                 width: 90%;
+                max-width: 400px;
+                padding: 2.5rem;
+            }
+            
+            .indica-text {
+                font-size: 15vw;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .indica-text {
+                font-size: 20vw;
+            }
+            
+            .nav-card {
                 padding: 2rem;
             }
             
-            .floating-circle {
-                display: none;
+            .nav-icon {
+                font-size: 3rem;
+            }
+            
+            .nav-title {
+                font-size: 1.5rem;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Фоновые эффекты -->
+    <!-- Background effects -->
     <div class="bg-effects">
         <div class="floating-circle circle-1"></div>
         <div class="floating-circle circle-2"></div>
@@ -319,55 +308,48 @@
             <div class="nav-card fade-in delay-1" onclick="window.location='{{ url_for('images') }}'">
                 <span class="nav-icon">🖼️</span>
                 <h3 class="nav-title">Images</h3>
-                <button class="nav-button">-</button>
+                <button class="nav-button">View</button>
             </div>
 
             <div class="nav-card fade-in delay-2" onclick="window.location='{{ url_for('videos') }}'">
                 <span class="nav-icon">🎬</span>
                 <h3 class="nav-title">Videos</h3>
-                <button class="nav-button">-</button>
+                <button class="nav-button">View</button>
             </div>
-
-            <div class="nav-card fade-in delay-3" onclick="window.location='{{ url_for('all_content') }}'">
-                <span class="nav-icon">📁</span>
-                <h3 class="nav-title">All</h3>
-                <button class="nav-button">Исследовать</button>
-            </div>
-        </div>
-
-        <div class="footer fade-in delay-3">
         </div>
     </section>
 
     <script>
-        // Добавляем анимацию появления при загрузке
         document.addEventListener('DOMContentLoaded', function() {
-            const fadeElements = document.querySelectorAll('.fade-in');
-            fadeElements.forEach(el => {
-                el.style.opacity = '1';
-                el.style.animation = 'fadeInUp 1s ease-out forwards';
-            });
-            
-            // Добавляем эффект параллакса для фоновых кругов
+            // Parallax effect for background circles
             document.addEventListener('mousemove', (e) => {
                 const circles = document.querySelectorAll('.floating-circle');
-                const mouseX = e.clientX / window.innerWidth;
-                const mouseY = e.clientY / window.innerHeight;
+                const mouseX = e.clientX / window.innerWidth - 0.5;
+                const mouseY = e.clientY / window.innerHeight - 0.5;
                 
                 circles.forEach((circle, index) => {
-                    const speed = (index + 1) * 0.5;
-                    const x = (mouseX - 0.5) * 40 * speed;
-                    const y = (mouseY - 0.5) * 40 * speed;
+                    const speed = (index + 1) * 0.3;
+                    const x = mouseX * 100 * speed;
+                    const y = mouseY * 100 * speed;
                     circle.style.transform = `translate(${x}px, ${y}px)`;
                 });
             });
             
-            // Добавляем звук при клике на карточки (опционально)
+            // Trigger animations
+            const fadeElements = document.querySelectorAll('.fade-in');
+            fadeElements.forEach(el => {
+                el.style.opacity = '1';
+            });
+            
+            // Add click sound effect (optional)
             const cards = document.querySelectorAll('.nav-card');
             cards.forEach(card => {
                 card.addEventListener('click', () => {
-                    // Можно добавить звуковой эффект
-                    console.log('Навигация на:', card.querySelector('.nav-title').textContent);
+                    // Add click effect
+                    card.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        card.style.transform = '';
+                    }, 150);
                 });
             });
         });
