@@ -134,7 +134,7 @@
             transition: all 0.3s ease;
             cursor: pointer;
             position: relative;
-            aspect-ratio: 4/3;
+            height: auto;
         }
 
         .media-card:hover {
@@ -163,8 +163,7 @@
 
         .media-preview {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
+            height: auto;
             display: block;
         }
 
@@ -237,6 +236,95 @@
             min-width: 45px;
             font-weight: bold;
             font-size: 1.1rem;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0);
+            backdrop-filter: blur(0px);
+            -webkit-backdrop-filter: blur(0px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+        }
+
+        .modal.active {
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            opacity: 1;
+            display: block;
+        }
+
+        .modal-content {
+            position: relative;
+            margin: 5% auto;
+            width: 90%;
+            max-width: 1200px;
+            padding: 0;
+            border: none;
+            background: transparent;
+            transform: scale(0.8);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.1s;
+        }
+
+        .modal.active .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .modal-media {
+            max-width: 100%;
+            max-height: 85vh;
+            display: block;
+            margin: 0 auto;
+            border-radius: 8px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .close {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            color: #fff;
+            font-size: 40px;
+            font-weight: 300;
+            cursor: pointer;
+            z-index: 10001;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s;
+            opacity: 0;
+            transform: scale(0.8);
+        }
+
+        .modal.active .close {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1) rotate(90deg);
+        }
+
+        .close:active {
+            transform: scale(0.95) rotate(90deg);
         }
 
         /* Empty state */
@@ -318,6 +406,14 @@
             .pagination {
                 flex-wrap: wrap;
             }
+            
+            .close {
+                top: 15px;
+                right: 15px;
+                width: 50px;
+                height: 50px;
+                font-size: 35px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -398,78 +494,103 @@
     {% endif %}
 
     <!-- Modal for preview -->
-    <div id="previewModal" class="modal" style="display: none;">
+    <div id="previewModal" class="modal">
+        <span class="close">&times;</span>
         <div class="modal-content">
-            <span class="close">&times;</span>
             <div id="modalMedia"></div>
-            <p id="modalFilename"></p>
         </div>
     </div>
 
     <script>
-        // Pagination template data
-        const currentPage = {{ current_page }};
-        const totalPages = {{ total_pages }};
-        const pageType = '{{ page_type }}';
-
         // Media preview functionality
         function previewMedia(url, filename) {
+            console.log('Preview media:', url, filename); // Для отладки
+            
             const modal = document.getElementById('previewModal');
             const modalMedia = document.getElementById('modalMedia');
-            const modalFilename = document.getElementById('modalFilename');
             
+            // Очищаем предыдущий контент
             modalMedia.innerHTML = '';
-            modalFilename.textContent = filename;
             
-            if (filename.toLowerCase().endsWith(('.mp4', '.webm', '.mov', '.avi'))) {
+            // Определяем тип файла и создаем элемент
+            if (filename.toLowerCase().match(/\.(mp4|webm|mov|avi)$/)) {
                 modalMedia.innerHTML = `
-                    <video controls autoplay style="width:100%; max-height:80vh;">
+                    <video class="modal-media" controls autoplay>
                         <source src="${url}" type="video/mp4">
                     </video>
                 `;
             } else {
-                modalMedia.innerHTML = `<img src="${url}" style="width:100%; max-height:80vh; object-fit:contain;">`;
+                modalMedia.innerHTML = `<img class="modal-media" src="${url}" alt="${filename}">`;
             }
             
-            modal.style.display = 'block';
+            // Показываем модальное окно
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Отключаем скролл
+            
+            // Добавляем обработчик клавиши Escape
+            const escapeHandler = (e) => {
+                if (e.key === 'Escape') {
+                    closeModal();
+                }
+            };
+            document.addEventListener('keydown', escapeHandler);
+            
+            // Сохраняем ссылку на обработчик для удаления позже
+            modal._escapeHandler = escapeHandler;
         }
 
-        // Close modal
+        // Функция закрытия модального окна
+        function closeModal() {
+            const modal = document.getElementById('previewModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = ''; // Восстанавливаем скролл
+            
+            // Останавливаем видео
+            const video = modal.querySelector('video');
+            if (video) {
+                video.pause();
+                video.currentTime = 0;
+            }
+            
+            // Удаляем обработчик Escape
+            if (modal._escapeHandler) {
+                document.removeEventListener('keydown', modal._escapeHandler);
+                delete modal._escapeHandler;
+            }
+            
+            // Очищаем контент после анимации
+            setTimeout(() => {
+                const modalMedia = document.getElementById('modalMedia');
+                modalMedia.innerHTML = '';
+            }, 400);
+        }
+
+        // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
             const modal = document.getElementById('previewModal');
             const closeBtn = document.querySelector('.close');
             
+            // Закрытие по клику на крестик
             if (closeBtn) {
-                closeBtn.onclick = function() {
-                    modal.style.display = 'none';
-                    // Stop video playback
-                    const video = modal.querySelector('video');
-                    if (video) {
-                        video.pause();
-                        video.currentTime = 0;
-                    }
-                }
+                closeBtn.addEventListener('click', closeModal);
             }
             
-            // Close modal when clicking outside
-            window.onclick = function(event) {
-                if (event.target == modal) {
-                    modal.style.display = 'none';
-                    const video = modal.querySelector('video');
-                    if (video) {
-                        video.pause();
-                        video.currentTime = 0;
-                    }
+            // Закрытие по клику вне контента
+            modal.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    closeModal();
                 }
-            }
+            });
             
-            // Video hover play
+            // Автовоспроизведение видео при наведении
             const videoCards = document.querySelectorAll('.media-card.video');
             videoCards.forEach(card => {
                 const video = card.querySelector('video');
                 if (video) {
                     card.addEventListener('mouseenter', () => {
-                        video.play().catch(e => console.log('Autoplay prevented'));
+                        video.play().catch(e => {
+                            console.log('Autoplay prevented:', e);
+                        });
                     });
                     
                     card.addEventListener('mouseleave', () => {
@@ -478,16 +599,28 @@
                     });
                 }
             });
+            
+            // Пагинация с клавиатуры
+            const currentPage = {{ current_page }};
+            const totalPages = {{ total_pages }};
+            const pageType = '{{ page_type }}';
+            
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowLeft' && currentPage > 1) {
+                    window.location.href = `/${pageType}?page=${currentPage - 1}`;
+                } else if (e.key === 'ArrowRight' && currentPage < totalPages) {
+                    window.location.href = `/${pageType}?page=${currentPage + 1}`;
+                }
+            });
+            
+            // Дебаг: проверяем, что обработчики назначены
+            console.log('Page loaded. Modal element:', modal);
+            console.log('Close button:', closeBtn);
+            console.log('Video cards found:', videoCards.length);
         });
-
-        // Keyboard navigation for pagination
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'ArrowLeft' && currentPage > 1) {
-                window.location.href = `/${pageType}?page=${currentPage - 1}`;
-            } else if (e.key === 'ArrowRight' && currentPage < totalPages) {
-                window.location.href = `/${pageType}?page=${currentPage + 1}`;
-            }
-        });
+        
+        // Дебаг: проверяем, что функция доступна глобально
+        window.previewMedia = previewMedia;
     </script>
 </body>
 </html>
