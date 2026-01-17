@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for
 import os
 import math
 
@@ -17,6 +17,15 @@ def get_sorted_files():
     # Sort by creation time (newest first)
     files.sort(key=lambda x: os.path.getctime(os.path.join(IMAGE_FOLDER, x)), reverse=True)
     return files
+
+# ДОБАВЬТЕ ЭТОТ МАРШРУТ ДЛЯ ГЛАВНОЙ СТРАНИЦЫ
+@app.route('/')
+def index():
+    """Main page - redirect to images or show main page"""
+    # Если у вас есть index.html, используйте:
+    return render_template('index.html')
+    # Или если хотите сразу на images:
+    # return redirect(url_for('images'))
 
 @app.route('/images')
 def images():
@@ -60,5 +69,3 @@ def videos():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
