@@ -8,20 +8,34 @@ IMAGE_FOLDER = 'static/images'
 ITEMS_PER_PAGE = 20
 
 def get_sorted_files():
-    """Get sorted files"""
-    files = []
+    """Get sorted files by REAL creation time"""
+    files_with_time = []
+    
     for filename in os.listdir(IMAGE_FOLDER):
         if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.mp4', '.webm', '.mov', '.avi')):
-            files.append(filename)
+            filepath = os.path.join(IMAGE_FOLDER, filename)
+            
+            # Пытаемся получить настоящее время создания
+            try:
+                stat = os.stat(filepath)
+                
+                if hasattr(stat, 'st_birthtime'):
+                    creation_time = stat.st_birthtime
+                else:
+                    creation_time = stat.st_mtime
+                    
+                files_with_time.append((filename, creation_time))
+                
+            except Exception as e:
+                # Если ошибка, используем текущее время
+                print(f"Error for {filename}: {e}")
+                files_with_time.append((filename, time.time()))
     
-    # Sort by creation time (newest first)
-    files.sort(key=lambda x: os.path.getctime(os.path.join(IMAGE_FOLDER, x)), reverse=True)
-    return files
-
-@app.route('/')
-def index():
-    """Main page"""
-    return render_template('index.html')
+    # Сортируем по времени создания (новые первыми)
+    files_with_time.sort(key=lambda x: x[1], reverse=True)
+    
+    # Возвращаем только имена файлов, отсортированные
+    return [filename for filename, _ in files_with_time]
 
 @app.route('/images')
 def images():
@@ -65,3 +79,4 @@ def videos():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
