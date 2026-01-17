@@ -1,31 +1,55 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request
 import os
 import math
+import time
 
 app = Flask(__name__)
 
-IMAGE_FOLDER = 'static/images'
+# Абсолютный путь
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+IMAGE_FOLDER = os.path.join(BASE_DIR, 'static/images')
 ITEMS_PER_PAGE = 20
 
+# Создаем папку если не существует
+os.makedirs(IMAGE_FOLDER, exist_ok=True)
+
+def get_file_creation_time(filepath):
+    """Получаем реальное время создания файла"""
+    try:
+        stat = os.stat(filepath)
+        
+        # Метод 1: st_birthtime - настоящее время создания (если файловая система поддерживает)
+        if hasattr(stat, 'st_birthtime'):
+            return stat.st_birthtime
+        
+        # Метод 2: st_mtime - время последнего изменения содержимого
+        # Лучше чем st_ctime для сортировки по "когда файл был добавлен"
+        return stat.st_mtime
+        
+    except Exception as e:
+        print(f"Ошибка получения времени для {filepath}: {e}")
+        return time.time()
+
 def get_sorted_files():
-    """Get sorted files"""
-    files = []
+    """Get sorted files by REAL creation/modification time"""
+    files_with_time = []
+    
     for filename in os.listdir(IMAGE_FOLDER):
         if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.mp4', '.webm', '.mov', '.avi')):
-            files.append(filename)
+            filepath = os.path.join(IMAGE_FOLDER, filename)
+            creation_time = get_file_creation_time(filepath)
+            files_with_time.append((filename, creation_time))
     
-    # Sort by creation time (newest first)
-    files.sort(key=lambda x: os.path.getctime(os.path.join(IMAGE_FOLDER, x)), reverse=True)
-    return files
+    # Сортируем по времени (новые первыми)
+    files_with_time.sort(key=lambda x: x[1], reverse=True)
+    
+    # Возвращаем только имена файлов
+    return [filename for filename, _ in files_with_time]
 
-# ДОБАВЬТЕ ЭТОТ МАРШРУТ ДЛЯ ГЛАВНОЙ СТРАНИЦЫ
 @app.route('/')
 def index():
-    """Main page - redirect to images or show main page"""
-    # Если у вас есть index.html, используйте:
+    """Main page"""
     return render_template('index.html')
-    # Или если хотите сразу на images:
-    # return redirect(url_for('images'))
 
 @app.route('/images')
 def images():
