@@ -3,16 +3,57 @@ import os
 import math
 import time
 import re
+import json
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
 # Абсолютный путь
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-IMAGE_FOLDER = os.path.join(BASE_DIR, 'static/images')
+IMAGE_FOLDER = os.path.join(BASE_DIR, r'C:\Users\callm\OneDrive\Indica\Site\v3\static\images')
 ITEMS_PER_PAGE = 20
+
+# Файл для хранения лайков
+LIKES_FILE = os.path.join(BASE_DIR, 'likes.json')
 
 # Создаем папку если не существует
 os.makedirs(IMAGE_FOLDER, exist_ok=True)
+
+def load_likes():
+    """Загружает данные о лайках из файла"""
+    try:
+        if os.path.exists(LIKES_FILE):
+            with open(LIKES_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"Error loading likes: {e}")
+    return {"likes": {}, "ip_timestamps": {}}
+
+def save_likes(data):
+    """Сохраняет данные о лайках в файл"""
+    try:
+        with open(LIKES_FILE, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        return True
+    except Exception as e:
+        print(f"Error saving likes: {e}")
+        return False
+
+def can_like(ip_address):
+    """Проверяет может ли IP поставить лайк (только 1 в час)"""
+    likes_data = load_likes()
+    ip_timestamps = likes_data.get("ip_timestamps", {})
+    
+    if ip_address in ip_timestamps:
+        last_like_time = datetime.fromisoformat(ip_timestamps[ip_address])
+        if datetime.now() - last_like_time < timedelta(hours=1):
+            return False
+    return True
+
+def get_file_likes(filename):
+    """Получает количество лайков у файла"""
+    likes_data = load_likes()
+    return likes_data.get("likes", {}).get(filename, 0)
 
 def get_file_creation_time(filepath):
     """Получаем реальное время создания файла"""
@@ -122,6 +163,7 @@ def images():
     """Images only with tag filtering"""
     page = request.args.get('page', 1, type=int)
     selected_tags = request.args.getlist('tag')
+    auto_open = request.args.get('auto_open', None)
     
     # Получаем все файлы с информацией
     all_files_info = get_sorted_files_with_tags()
@@ -154,13 +196,15 @@ def images():
                          total_pages=total_pages,
                          total_items=len(images_info),
                          all_tags=all_tags,
-                         selected_tags=selected_tags)
+                         selected_tags=selected_tags,
+                         auto_open=auto_open)
 
 @app.route('/videos')
 def videos():
     """Videos only with tag filtering"""
     page = request.args.get('page', 1, type=int)
     selected_tags = request.args.getlist('tag')
+    auto_open = request.args.get('auto_open', None)
     
     # Получаем все файлы с информацией
     all_files_info = get_sorted_files_with_tags()
@@ -193,13 +237,15 @@ def videos():
                          total_pages=total_pages,
                          total_items=len(videos_info),
                          all_tags=all_tags,
-                         selected_tags=selected_tags)
+                         selected_tags=selected_tags,
+                         auto_open=auto_open)
 
 @app.route('/all')
 def all_media():
     """All media (images + videos) with tag filtering"""
     page = request.args.get('page', 1, type=int)
     selected_tags = request.args.getlist('tag')
+    auto_open = request.args.get('auto_open', None)
     
     # Получаем все файлы с информацией
     all_files_info = get_sorted_files_with_tags()
@@ -229,8 +275,67 @@ def all_media():
                          total_pages=total_pages,
                          total_items=len(all_files_info),
                          all_tags=all_tags,
-                         selected_tags=selected_tags)
+                         selected_tags=selected_tags,
+                         auto_open=auto_open)
 
+@app.route('/view/<filename>')
+def view_file(filename):
+    """Прямая ссылка на конкретный файл"""
+    # Проверяем существует ли файл
+    filepath = os.path.join(IMAGE_FOLDER, filename)
+    if not os.path.exists(filepath):
+        return "File not found", 404
+    
+    # Получаем информацию о файле
+    all_files_info = get_sorted_files_with_tags()
+    file_info = next((f for f in all_files_info if f['filename'] == filename), None)
+    
+    if not file_info:
+        return "File not found", 404
+    
+    # Определяем тип страницы (images, videos, all)
+    page_type = 'images' if file_info['is_image'] else 'videos'
+    
+    # Получаем индекс файла в общем списке
+    if page_type == 'images':
+        all_files_of_type = [f for f in all_files_info if f['is_image']]
+    elif page_type == 'videos':
+        all_files_of_type = [f for f in all_files_info if f['is_video']]
+    else:
+        all_files_of_type = all_files_info
+    
+    # Находим индекс файла
+    try:
+        file_index = next(i for i, f in enumerate(all_files_of_type) if f['filename'] == filename)
+    except StopIteration:
+        file_index = 0
+    
+    # Вычисляем страницу, на которой находится файл
+    page = (file_index // ITEMS_PER_PAGE) + 1
+    
+    # Получаем файлы для этой страницы
+    start_idx = (page - 1) * ITEMS_PER_PAGE
+    end_idx = start_idx + ITEMS_PER_PAGE
+    paginated_files = all_files_of_type[start_idx:end_idx]
+    paginated_filenames = [f['filename'] for f in paginated_files]
+    
+    # Получаем все теги
+    all_tags = get_all_unique_tags(all_files_of_type)
+    
+    # Рендерим галерею с указанием конкретного файла для авто-открытия
+    return render_template('gallery.html', 
+                         files=paginated_filenames,
+                         files_info=paginated_files,
+                         title=f"View: {filename}",
+                         page_type=page_type,
+                         current_page=page,
+                         total_pages=math.ceil(len(all_files_of_type) / ITEMS_PER_PAGE),
+                         total_items=len(all_files_of_type),
+                         all_tags=all_tags,
+                         selected_tags=[],
+                         auto_open=filename)
+
+# API endpoints
 @app.route('/api/tags')
 def api_tags():
     """API для получения всех тегов"""
@@ -274,6 +379,100 @@ def api_filter():
         'total': len(filtered_files)
     })
 
-if __name__ == '__main__':
-    app.run(debug=True)
+@app.route('/api/like', methods=['POST'])
+def like_file():
+    """API для постановки лайка файлу"""
+    try:
+        data = request.get_json()
+        filename = data.get('filename')
+        
+        if not filename:
+            return jsonify({'error': 'Filename is required'}), 400
+        
+        # Проверяем существует ли файл
+        filepath = os.path.join(IMAGE_FOLDER, filename)
+        if not os.path.exists(filepath):
+            return jsonify({'error': 'File not found'}), 404
+        
+        # Получаем IP адрес
+        ip_address = request.remote_addr
+        
+        # Проверяем может ли пользователь поставить лайк
+        if not can_like(ip_address):
+            return jsonify({
+                'error': 'You can only like one file per hour',
+                'can_like': False
+            }), 429
+        
+        # Загружаем текущие лайки
+        likes_data = load_likes()
+        
+        # Обновляем количество лайков для файла
+        if filename not in likes_data["likes"]:
+            likes_data["likes"][filename] = 1
+        else:
+            likes_data["likes"][filename] += 1
+        
+        # Обновляем временную метку для IP
+        likes_data["ip_timestamps"][ip_address] = datetime.now().isoformat()
+        
+        # Сохраняем изменения
+        if save_likes(likes_data):
+            return jsonify({
+                'success': True,
+                'likes': likes_data["likes"][filename],
+                'can_like': False,
+                'message': 'Liked successfully!'
+            })
+        else:
+            return jsonify({'error': 'Failed to save like'}), 500
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
+@app.route('/api/like/status')
+def like_status():
+    """API для проверки состояния лайка для файла"""
+    filename = request.args.get('filename')
+    ip_address = request.remote_addr
+    
+    if not filename:
+        return jsonify({'error': 'Filename is required'}), 400
+    
+    can_user_like = can_like(ip_address)
+    likes_count = get_file_likes(filename)
+    
+    return jsonify({
+        'can_like': can_user_like,
+        'likes': likes_count,
+        'filename': filename
+    })
+
+@app.route('/api/likes/batch', methods=['POST'])
+def batch_likes():
+    """API для получения информации о лайках для нескольких файлов"""
+    try:
+        data = request.get_json()
+        filenames = data.get('filenames', [])
+        
+        if not isinstance(filenames, list):
+            return jsonify({'error': 'filenames must be a list'}), 400
+        
+        likes_data = load_likes()
+        ip_address = request.remote_addr
+        can_user_like = can_like(ip_address)
+        
+        result = {}
+        for filename in filenames:
+            result[filename] = {
+                'likes': likes_data.get("likes", {}).get(filename, 0),
+                'can_like': can_user_like
+            }
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
