@@ -513,6 +513,35 @@
             color: rgba(255, 255, 255, 0.8);
         }
 
+        /* Notification styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            z-index: 100000;
+            animation: fadeIn 0.3s ease-out;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 400px;
+            word-break: break-word;
+        }
+
+        .notification.success {
+            background: linear-gradient(45deg, #2ed573, #1dd1a1);
+        }
+
+        .notification.error {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+        }
+
+        .notification.info {
+            background: linear-gradient(45deg, #3742fa, #5352ed);
+        }
+
         /* Animations */
         @keyframes fadeIn {
             from {
@@ -585,6 +614,21 @@
                 flex-direction: column;
                 align-items: flex-start;
             }
+            
+            .modal-action-btn {
+                width: 45px !important;
+                height: 45px !important;
+                font-size: 20px !important;
+                bottom: 15px !important;
+                right: 15px !important;
+            }
+            
+            .like-counter {
+                bottom: 15px !important;
+                left: 15px !important;
+                padding: 6px 12px !important;
+                font-size: 12px !important;
+            }
         }
 
         @media (max-width: 480px) {
@@ -600,6 +644,12 @@
             
             .filter-container {
                 padding: 1rem;
+            }
+            
+            .modal-action-btn {
+                width: 40px !important;
+                height: 40px !important;
+                font-size: 18px !important;
             }
         }
     </style>
@@ -741,6 +791,73 @@
         <span class="close">&times;</span>
         <div class="modal-content">
             <div id="modalMedia"></div>
+            
+            <!-- Кнопки действий (лайк и шаринг) -->
+            <div class="modal-actions" style="
+                position: absolute;
+                bottom: 20px;
+                right: 20px;
+                display: flex;
+                gap: 10px;
+                z-index: 10001;
+            ">
+                <!-- Кнопка лайка -->
+                <button id="likeButton" class="modal-action-btn" onclick="likeCurrentMedia()" style="
+                    background: rgba(255, 255, 255, 0.15);
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    border-radius: 50%;
+                    width: 50px;
+                    height: 50px;
+                    color: white;
+                    font-size: 24px;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.3s;
+                ">
+                    ♡
+                </button>
+                
+                <!-- Кнопка шаринга -->
+                <button id="shareButton" class="modal-action-btn" onclick="shareCurrentMedia()" style="
+                    background: rgba(255, 255, 255, 0.15);
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    border-radius: 50%;
+                    width: 50px;
+                    height: 50px;
+                    color: white;
+                    font-size: 24px;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.3s;
+                ">
+                    ↗
+                </button>
+            </div>
+            
+            <!-- Счетчик лайков -->
+            <div id="likeCounter" class="like-counter" style="
+                position: absolute;
+                bottom: 20px;
+                left: 20px;
+                background: rgba(0, 0, 0, 0.6);
+                backdrop-filter: blur(10px);
+                color: white;
+                padding: 8px 15px;
+                border-radius: 20px;
+                font-size: 14px;
+                display: none;
+                align-items: center;
+                gap: 5px;
+                z-index: 10001;
+            ">
+                <span id="likeCount">0</span> ♡
+            </div>
         </div>
     </div>
 
@@ -754,9 +871,14 @@
     </div>
 
     <script>
-        // Filter functionality
+        // Глобальные переменные
         let selectedTags = new Set({{ selected_tags|tojson|safe }});
-        
+        let currentMediaUrl = '';
+        let currentFilename = '';
+        let currentLikes = 0;
+        let canLike = false;
+
+        // Filter functionality
         function updateTagState(tag, isChecked) {
             if (isChecked) {
                 selectedTags.add(tag);
@@ -881,11 +1003,15 @@
         }
         
         // Media preview functionality
-        function previewMedia(url, filename) {
+        async function previewMedia(url, filename) {
             console.log('Preview media:', url, filename);
             
             const modal = document.getElementById('previewModal');
             const modalMedia = document.getElementById('modalMedia');
+            
+            // Сохраняем текущие данные
+            currentMediaUrl = url;
+            currentFilename = filename;
             
             // Очищаем предыдущий контент
             modalMedia.innerHTML = '';
@@ -901,9 +1027,15 @@
                 modalMedia.innerHTML = `<img class="modal-media" src="${url}" alt="${filename}">`;
             }
             
+            // Загружаем информацию о лайках
+            await loadLikeInfo(filename);
+            
             // Показываем модальное окно
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
+            
+            // Обновляем URL в браузере без перезагрузки
+            updateUrlForMedia(filename);
             
             // Добавляем обработчик клавиши Escape
             const escapeHandler = (e) => {
@@ -917,11 +1049,231 @@
             modal._escapeHandler = escapeHandler;
         }
 
+        // Функция загрузки информации о лайках
+        async function loadLikeInfo(filename) {
+            try {
+                const response = await fetch(`/api/like/status?filename=${encodeURIComponent(filename)}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error('Error loading like info:', data.error);
+                    currentLikes = 0;
+                    canLike = false;
+                } else {
+                    currentLikes = data.likes || 0;
+                    canLike = data.can_like || false;
+                }
+                
+                updateLikeUI();
+            } catch (error) {
+                console.error('Error loading like info:', error);
+                currentLikes = 0;
+                canLike = false;
+                updateLikeUI();
+            }
+        }
+
+        // Обновление UI лайков
+        function updateLikeUI() {
+            const likeButton = document.getElementById('likeButton');
+            const likeCounter = document.getElementById('likeCounter');
+            const likeCount = document.getElementById('likeCount');
+            
+            if (likeButton && likeCounter && likeCount) {
+                likeCount.textContent = currentLikes;
+                
+                // Показываем счетчик если есть лайки
+                likeCounter.style.display = currentLikes > 0 ? 'flex' : 'none';
+                
+                // Обновляем кнопку лайка
+                if (canLike) {
+                    likeButton.innerHTML = '♡';
+                    likeButton.style.color = '#ffffff';
+                    likeButton.style.cursor = 'pointer';
+                    likeButton.title = 'Like this file';
+                    likeButton.onclick = () => likeCurrentMedia();
+                } else {
+                    likeButton.innerHTML = '♥';
+                    likeButton.style.color = '#ff4757';
+                    likeButton.style.cursor = 'not-allowed';
+                    likeButton.title = 'You can like only one file per hour';
+                    likeButton.onclick = () => showNotification('You can like only one file per hour', 'info');
+                }
+                
+                // Добавляем hover эффекты
+                likeButton.onmouseenter = function() {
+                    if (canLike) {
+                        this.style.transform = 'scale(1.1)';
+                        this.style.background = 'rgba(255, 255, 255, 0.25)';
+                    }
+                };
+                
+                likeButton.onmouseleave = function() {
+                    if (canLike) {
+                        this.style.transform = 'scale(1)';
+                        this.style.background = 'rgba(255, 255, 255, 0.15)';
+                    }
+                };
+                
+                // Стили для кнопки шаринга
+                const shareButton = document.getElementById('shareButton');
+                if (shareButton) {
+                    shareButton.title = 'Share this file';
+                    shareButton.onmouseenter = function() {
+                        this.style.transform = 'scale(1.1)';
+                        this.style.background = 'rgba(255, 255, 255, 0.25)';
+                    };
+                    
+                    shareButton.onmouseleave = function() {
+                        this.style.transform = 'scale(1)';
+                        this.style.background = 'rgba(255, 255, 255, 0.15)';
+                    };
+                }
+            }
+        }
+
+        // Функция лайка
+        async function likeCurrentMedia() {
+            if (!canLike) {
+                showNotification('You can like only one file per hour', 'info');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/like', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        filename: currentFilename
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    currentLikes = data.likes;
+                    canLike = data.can_like;
+                    updateLikeUI();
+                    showNotification('Liked successfully!', 'success');
+                } else {
+                    showNotification(data.error || 'Failed to like', 'error');
+                }
+            } catch (error) {
+                console.error('Error liking file:', error);
+                showNotification('Error liking file', 'error');
+            }
+        }
+
+        // Функция шаринга
+        function shareCurrentMedia() {
+            const shareUrl = `${window.location.origin}/view/${encodeURIComponent(currentFilename)}`;
+            
+            // Пробуем использовать Web Share API если доступен
+            if (navigator.share) {
+                navigator.share({
+                    title: `Check out this file: ${currentFilename}`,
+                    text: `View "${currentFilename}" on INDICA Gallery`,
+                    url: shareUrl,
+                })
+                .then(() => console.log('Shared successfully'))
+                .catch((error) => {
+                    // Если пользователь отменил шаринг, копируем в буфер
+                    if (error.name !== 'AbortError') {
+                        copyToClipboard(shareUrl);
+                    }
+                });
+            } else {
+                // Копируем в буфер обмена
+                copyToClipboard(shareUrl);
+            }
+        }
+
+        // Функция копирования в буфер обмена
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification('Link copied to clipboard!', 'success');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                // Fallback для старых браузеров
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showNotification('Link copied to clipboard!', 'success');
+            });
+        }
+
+        // Функция для показа уведомлений
+        function showNotification(message, type = 'info') {
+            // Создаем элемент уведомления
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            
+            // Добавляем на страницу
+            document.body.appendChild(notification);
+            
+            // Удаляем через 3 секунды
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateY(-20px)';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // Обновление URL при открытии медиа
+        function updateUrlForMedia(filename) {
+            const newUrl = `${window.location.origin}/view/${encodeURIComponent(filename)}`;
+            window.history.pushState({ filename: filename }, '', newUrl);
+        }
+
+        // Обработка навигации по истории
+        window.addEventListener('popstate', function(event) {
+            // Если мы выходим из просмотра конкретного файла, закрываем модальное окно
+            if (!window.location.pathname.startsWith('/view/')) {
+                const modal = document.getElementById('previewModal');
+                if (modal && modal.classList.contains('active')) {
+                    closeModal();
+                }
+            } else {
+                // Если перешли на другую прямую ссылку, открываем новый файл
+                const filename = window.location.pathname.replace('/view/', '');
+                if (filename && filename !== currentFilename) {
+                    const url = `${window.location.origin}/static/images/${filename}`;
+                    previewMedia(url, decodeURIComponent(filename));
+                }
+            }
+        });
+
         // Функция закрытия модального окна
         function closeModal() {
             const modal = document.getElementById('previewModal');
             modal.classList.remove('active');
             document.body.style.overflow = '';
+            
+            // Возвращаем URL галереи если мы были на прямой ссылке
+            const currentPath = window.location.pathname;
+            if (currentPath.startsWith('/view/')) {
+                const pageType = '{{ page_type }}';
+                const page = {{ current_page }};
+                let url = `/${pageType}?page=${page}`;
+                
+                if (selectedTags.size > 0) {
+                    Array.from(selectedTags).forEach(tag => {
+                        url += `&tag=${encodeURIComponent(tag)}`;
+                    });
+                }
+                
+                window.history.pushState({}, '', url);
+            }
             
             // Останавливаем видео
             const video = modal.querySelector('video');
@@ -929,6 +1281,12 @@
                 video.pause();
                 video.currentTime = 0;
             }
+            
+            // Сбрасываем состояние
+            currentMediaUrl = '';
+            currentFilename = '';
+            currentLikes = 0;
+            canLike = false;
             
             // Удаляем обработчик Escape
             if (modal._escapeHandler) {
@@ -939,8 +1297,26 @@
             // Очищаем контент после анимации
             setTimeout(() => {
                 const modalMedia = document.getElementById('modalMedia');
-                modalMedia.innerHTML = '';
+                if (modalMedia) {
+                    modalMedia.innerHTML = '';
+                }
+                
+                // Сбрасываем UI лайков
+                updateLikeUI();
             }, 400);
+        }
+
+        // Функция для авто-открытия файла при загрузке страницы с прямой ссылкой
+        function autoOpenFileIfNeeded() {
+            {% if auto_open %}
+            const filename = '{{ auto_open }}';
+            const url = '{{ url_for("static", filename="images/" ~ auto_open) }}';
+            
+            // Ждем загрузки DOM
+            setTimeout(() => {
+                previewMedia(url, filename);
+            }, 500);
+            {% endif %}
         }
 
         // Инициализация при загрузке страницы
@@ -962,11 +1338,13 @@
             }
             
             // Закрытие по клику вне контента
-            modal.addEventListener('click', function(event) {
-                if (event.target === modal) {
-                    closeModal();
-                }
-            });
+            if (modal) {
+                modal.addEventListener('click', function(event) {
+                    if (event.target === modal) {
+                        closeModal();
+                    }
+                });
+            }
             
             // Закрытие tags modal
             const tagsModal = document.getElementById('tagsModal');
@@ -1002,6 +1380,12 @@
             const pageType = '{{ page_type }}';
             
             document.addEventListener('keydown', function(e) {
+                // Только если модальное окно не открыто
+                const modal = document.getElementById('previewModal');
+                if (modal && modal.classList.contains('active')) {
+                    return;
+                }
+                
                 if (e.key === 'ArrowLeft' && currentPage > 1) {
                     let url = `/${pageType}?page=${currentPage - 1}`;
                     if (selectedTags.size > 0) {
@@ -1020,7 +1404,51 @@
                     window.location.href = url;
                 }
             });
+            
+            // Авто-открытие файла если нужно
+            autoOpenFileIfNeeded();
+            
+            // Навигация стрелками в модальном окне
+            document.addEventListener('keydown', function(e) {
+                const modal = document.getElementById('previewModal');
+                if (!modal || !modal.classList.contains('active')) {
+                    return;
+                }
+                
+                // Стрелки для навигации по галерее в модальном окне
+                if (e.key === 'ArrowLeft') {
+                    navigateToAdjacentFile('prev');
+                } else if (e.key === 'ArrowRight') {
+                    navigateToAdjacentFile('next');
+                }
+            });
         });
+
+        // Функция навигации по соседним файлам в модальном окне
+        function navigateToAdjacentFile(direction) {
+            const filesInfo = {{ files_info|tojson|safe }};
+            if (!filesInfo || filesInfo.length === 0) return;
+            
+            // Находим индекс текущего файла
+            const currentIndex = filesInfo.findIndex(f => f.filename === currentFilename);
+            if (currentIndex === -1) return;
+            
+            // Определяем следующий/предыдущий индекс
+            let newIndex;
+            if (direction === 'next') {
+                newIndex = (currentIndex + 1) % filesInfo.length;
+            } else {
+                newIndex = (currentIndex - 1 + filesInfo.length) % filesInfo.length;
+            }
+            
+            // Получаем информацию о новом файле
+            const newFile = filesInfo[newIndex];
+            if (!newFile) return;
+            
+            // Открываем новый файл
+            const url = `${window.location.origin}/static/images/${newFile.filename}`;
+            previewMedia(url, newFile.filename);
+        }
     </script>
 </body>
 </html>
