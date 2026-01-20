@@ -103,6 +103,145 @@
             font-weight: 300;
         }
 
+        /* Filter section */
+        .filter-section {
+            max-width: 1400px;
+            margin: 0 auto 2rem;
+            padding: 0 2rem;
+        }
+
+        .filter-container {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .filter-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            background: linear-gradient(45deg, #a8edea, #fed6e3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .filter-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: #fff;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(45deg, #ff6ec7, #7873f5);
+            border-color: transparent;
+            color: white;
+        }
+
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .tag-item {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tag-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .tag-item.active {
+            background: linear-gradient(45deg, #ff6ec7, #7873f5);
+            border-color: transparent;
+            color: white;
+            box-shadow: 0 5px 15px rgba(120, 115, 245, 0.3);
+        }
+
+        .tag-checkbox {
+            margin-right: 0.5rem;
+        }
+
+        .selected-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .selected-tag {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .remove-tag {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .remove-tag:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
         /* Pagination - Top */
         .pagination-top {
             max-width: 1400px;
@@ -173,6 +312,33 @@
 
         .media-card:hover img {
             transform: scale(1.05);
+        }
+
+        /* File tags */
+        .file-tags {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            max-width: calc(100% - 20px);
+        }
+
+        .file-tag {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .media-card:hover .file-tag {
+            opacity: 1;
         }
 
         /* Pagination - Bottom */
@@ -414,6 +580,11 @@
                 height: 50px;
                 font-size: 35px;
             }
+            
+            .filter-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
         }
 
         @media (max-width: 480px) {
@@ -425,6 +596,10 @@
                 min-width: 35px;
                 height: 35px;
                 font-size: 0.9rem;
+            }
+            
+            .filter-container {
+                padding: 1rem;
             }
         }
     </style>
@@ -448,8 +623,53 @@
     <!-- Page title -->
     <header class="page-header">
         <h1 class="page-title">{{ title }}</h1>
-        <p class="page-info">Page {{ current_page }} of {{ total_pages }} • {{ total_items }} total</p>
+        <p class="page-info">
+            Page {{ current_page }} of {{ total_pages }} • {{ total_items }} total
+            {% if selected_tags %}
+                • Filtered by: {{ selected_tags|join(', ') }}
+            {% endif %}
+        </p>
     </header>
+
+    <!-- Filter section -->
+    {% if all_tags %}
+    <section class="filter-section">
+        <div class="filter-container">
+            <div class="filter-header">
+                <h2 class="filter-title">Filter by Tags</h2>
+                <div class="filter-controls">
+                    <button class="filter-btn" onclick="clearFilters()">Clear All</button>
+                    <button class="filter-btn active" onclick="applyFilters()">Apply Filters</button>
+                </div>
+            </div>
+            
+            <div class="tags-container">
+                {% for tag in all_tags %}
+                <div class="tag-item {% if tag in selected_tags %}active{% endif %}" 
+                     onclick="toggleTag('{{ tag }}')">
+                    <input type="checkbox" 
+                           class="tag-checkbox" 
+                           value="{{ tag }}"
+                           {% if tag in selected_tags %}checked{% endif %}
+                           onchange="updateTagState('{{ tag }}', this.checked)">
+                    {{ tag }}
+                </div>
+                {% endfor %}
+            </div>
+            
+            {% if selected_tags %}
+            <div class="selected-tags">
+                {% for tag in selected_tags %}
+                <span class="selected-tag">
+                    {{ tag }}
+                    <button class="remove-tag" onclick="removeTag('{{ tag }}')">×</button>
+                </span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
 
     <!-- Top pagination -->
     {% if total_pages > 1 %}
@@ -460,28 +680,51 @@
 
     <!-- Gallery -->
     <main class="gallery-container">
-        {% if files %}
+        {% if files_info %}
             <div class="gallery">
-                {% for file in files %}
-                    <div class="media-card {% if file.lower().endswith(('.mp4', '.webm', '.mov', '.avi')) %}video{% endif %}"
-                         onclick="previewMedia('{{ url_for('static', filename='images/' ~ file) }}', '{{ file }}')">
-                        {% if file.lower().endswith(('.mp4', '.webm', '.mov', '.avi')) %}
+                {% for file_info in files_info %}
+                    <div class="media-card {% if file_info.is_video %}video{% endif %}"
+                         onclick="previewMedia('{{ url_for('static', filename='images/' ~ file_info.filename) }}', '{{ file_info.filename }}')">
+                        {% if file_info.is_video %}
                             <video class="media-preview" preload="metadata" muted playsinline>
-                                <source src="{{ url_for('static', filename='images/' ~ file) }}" type="video/mp4">
+                                <source src="{{ url_for('static', filename='images/' ~ file_info.filename) }}" type="video/mp4">
                             </video>
                         {% else %}
                             <img class="media-preview" 
-                                 src="{{ url_for('static', filename='images/' ~ file) }}" 
-                                 alt="{{ file }}"
+                                 src="{{ url_for('static', filename='images/' ~ file_info.filename) }}" 
+                                 alt="{{ file_info.display_name }}"
                                  loading="lazy">
+                        {% endif %}
+                        
+                        <!-- Tags on image hover -->
+                        {% if file_info.tags %}
+                        <div class="file-tags">
+                            {% for tag in file_info.tags[:3] %}
+                            <span class="file-tag" onclick="event.stopPropagation(); addTag('{{ tag }}')">{{ tag }}</span>
+                            {% endfor %}
+                            {% if file_info.tags|length > 3 %}
+                            <span class="file-tag" onclick="event.stopPropagation(); showAllTags('{{ file_info.filename }}')">+{{ file_info.tags|length - 3 }}</span>
+                            {% endif %}
+                        </div>
                         {% endif %}
                     </div>
                 {% endfor %}
             </div>
         {% else %}
             <div class="empty-state">
-                <div class="empty-icon">📭</div>
-                <h2 class="empty-title">No content found</h2>
+                <div class="empty-icon">
+                    {% if selected_tags %}🔍{% else %}📭{% endif %}
+                </div>
+                <h2 class="empty-title">
+                    {% if selected_tags %}
+                        No content found with selected filters
+                    {% else %}
+                        No content found
+                    {% endif %}
+                </h2>
+                {% if selected_tags %}
+                <button class="filter-btn" onclick="clearFilters()" style="margin-top: 1rem;">Clear Filters</button>
+                {% endif %}
             </div>
         {% endif %}
     </main>
@@ -501,10 +744,145 @@
         </div>
     </div>
 
+    <!-- All tags modal -->
+    <div id="tagsModal" class="modal">
+        <div class="modal-content" style="max-width: 500px; background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 2rem;">
+            <h3 style="margin-bottom: 1rem; color: white;">All Tags</h3>
+            <div id="modalTagsContainer" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem;"></div>
+            <button class="filter-btn" onclick="closeTagsModal()" style="width: 100%;">Close</button>
+        </div>
+    </div>
+
     <script>
+        // Filter functionality
+        let selectedTags = new Set({{ selected_tags|tojson|safe }});
+        
+        function updateTagState(tag, isChecked) {
+            if (isChecked) {
+                selectedTags.add(tag);
+            } else {
+                selectedTags.delete(tag);
+            }
+            updateTagUI();
+        }
+        
+        function toggleTag(tag) {
+            const checkbox = document.querySelector(`.tag-checkbox[value="${tag}"]`);
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+                updateTagState(tag, checkbox.checked);
+            }
+        }
+        
+        function addTag(tag) {
+            selectedTags.add(tag);
+            updateTagUI();
+            // Find and check the corresponding checkbox
+            const checkbox = document.querySelector(`.tag-checkbox[value="${tag}"]`);
+            if (checkbox) {
+                checkbox.checked = true;
+            }
+            updateTagItemState(tag, true);
+        }
+        
+        function removeTag(tag) {
+            selectedTags.delete(tag);
+            updateTagUI();
+            // Find and uncheck the corresponding checkbox
+            const checkbox = document.querySelector(`.tag-checkbox[value="${tag}"]`);
+            if (checkbox) {
+                checkbox.checked = false;
+            }
+            updateTagItemState(tag, false);
+        }
+        
+        function updateTagItemState(tag, isActive) {
+            const tagItem = document.querySelector(`.tag-item[onclick*="${tag}"]`);
+            if (tagItem) {
+                if (isActive) {
+                    tagItem.classList.add('active');
+                } else {
+                    tagItem.classList.remove('active');
+                }
+            }
+        }
+        
+        function updateTagUI() {
+            // Update selected tags display
+            const selectedTagsContainer = document.querySelector('.selected-tags');
+            if (selectedTagsContainer) {
+                if (selectedTags.size > 0) {
+                    selectedTagsContainer.innerHTML = Array.from(selectedTags).map(tag => `
+                        <span class="selected-tag">
+                            ${tag}
+                            <button class="remove-tag" onclick="removeTag('${tag}')">×</button>
+                        </span>
+                    `).join('');
+                    selectedTagsContainer.style.display = 'flex';
+                } else {
+                    selectedTagsContainer.style.display = 'none';
+                    selectedTagsContainer.innerHTML = '';
+                }
+            }
+            
+            // Update URL in page info
+            const pageInfo = document.querySelector('.page-info');
+            if (pageInfo) {
+                const baseText = `Page {{ current_page }} of {{ total_pages }} • {{ total_items }} total`;
+                if (selectedTags.size > 0) {
+                    pageInfo.innerHTML = `${baseText} • Filtered by: ${Array.from(selectedTags).join(', ')}`;
+                } else {
+                    pageInfo.innerHTML = baseText;
+                }
+            }
+        }
+        
+        function applyFilters() {
+            const pageType = '{{ page_type }}';
+            let url = `/${pageType}?page=1`;
+            
+            if (selectedTags.size > 0) {
+                Array.from(selectedTags).forEach(tag => {
+                    url += `&tag=${encodeURIComponent(tag)}`;
+                });
+            }
+            
+            window.location.href = url;
+        }
+        
+        function clearFilters() {
+            const pageType = '{{ page_type }}';
+            window.location.href = `/${pageType}?page=1`;
+        }
+        
+        function showAllTags(filename) {
+            const modal = document.getElementById('tagsModal');
+            const container = document.getElementById('modalTagsContainer');
+            
+            // Find file info
+            const fileInfo = {{ files_info|tojson|safe }}.find(f => f.filename === filename);
+            
+            if (fileInfo && fileInfo.tags) {
+                container.innerHTML = fileInfo.tags.map(tag => `
+                    <div class="tag-item" onclick="addTag('${tag}'); closeTagsModal()">
+                        ${tag}
+                    </div>
+                `).join('');
+                
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+        
+        function closeTagsModal() {
+            const modal = document.getElementById('tagsModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
         // Media preview functionality
         function previewMedia(url, filename) {
-            console.log('Preview media:', url, filename); // Для отладки
+            console.log('Preview media:', url, filename);
             
             const modal = document.getElementById('previewModal');
             const modalMedia = document.getElementById('modalMedia');
@@ -525,7 +903,7 @@
             
             // Показываем модальное окно
             modal.classList.add('active');
-            document.body.style.overflow = 'hidden'; // Отключаем скролл
+            document.body.style.overflow = 'hidden';
             
             // Добавляем обработчик клавиши Escape
             const escapeHandler = (e) => {
@@ -543,7 +921,7 @@
         function closeModal() {
             const modal = document.getElementById('previewModal');
             modal.classList.remove('active');
-            document.body.style.overflow = ''; // Восстанавливаем скролл
+            document.body.style.overflow = '';
             
             // Останавливаем видео
             const video = modal.querySelector('video');
@@ -567,6 +945,14 @@
 
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize tag UI
+            updateTagUI();
+            
+            // Update tag items state
+            {{ selected_tags|tojson|safe }}.forEach(tag => {
+                updateTagItemState(tag, true);
+            });
+            
             const modal = document.getElementById('previewModal');
             const closeBtn = document.querySelector('.close');
             
@@ -581,6 +967,16 @@
                     closeModal();
                 }
             });
+            
+            // Закрытие tags modal
+            const tagsModal = document.getElementById('tagsModal');
+            if (tagsModal) {
+                tagsModal.addEventListener('click', function(event) {
+                    if (event.target === tagsModal) {
+                        closeTagsModal();
+                    }
+                });
+            }
             
             // Автовоспроизведение видео при наведении
             const videoCards = document.querySelectorAll('.media-card.video');
@@ -607,20 +1003,24 @@
             
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'ArrowLeft' && currentPage > 1) {
-                    window.location.href = `/${pageType}?page=${currentPage - 1}`;
+                    let url = `/${pageType}?page=${currentPage - 1}`;
+                    if (selectedTags.size > 0) {
+                        Array.from(selectedTags).forEach(tag => {
+                            url += `&tag=${encodeURIComponent(tag)}`;
+                        });
+                    }
+                    window.location.href = url;
                 } else if (e.key === 'ArrowRight' && currentPage < totalPages) {
-                    window.location.href = `/${pageType}?page=${currentPage + 1}`;
+                    let url = `/${pageType}?page=${currentPage + 1}`;
+                    if (selectedTags.size > 0) {
+                        Array.from(selectedTags).forEach(tag => {
+                            url += `&tag=${encodeURIComponent(tag)}`;
+                        });
+                    }
+                    window.location.href = url;
                 }
             });
-            
-            // Дебаг: проверяем, что обработчики назначены
-            console.log('Page loaded. Modal element:', modal);
-            console.log('Close button:', closeBtn);
-            console.log('Video cards found:', videoCards.length);
         });
-        
-        // Дебаг: проверяем, что функция доступна глобально
-        window.previewMedia = previewMedia;
     </script>
 </body>
 </html>
