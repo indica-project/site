@@ -817,7 +817,7 @@
                     justify-content: center;
                     transition: all 0.3s;
                 ">
-                    ♡
+                    💦
                 </button>
                 
                 <!-- Кнопка шаринга -->
@@ -1087,17 +1087,17 @@
                 
                 // Обновляем кнопку лайка
                 if (canLike) {
-                    likeButton.innerHTML = '♡';
+                    likeButton.innerHTML = '💦';
                     likeButton.style.color = '#ffffff';
                     likeButton.style.cursor = 'pointer';
-                    likeButton.title = 'Like this file';
+                    likeButton.title = 'Mark as fapped';
                     likeButton.onclick = () => likeCurrentMedia();
                 } else {
-                    likeButton.innerHTML = '♥';
+                    likeButton.innerHTML = '❤️';
                     likeButton.style.color = '#ff4757';
                     likeButton.style.cursor = 'not-allowed';
-                    likeButton.title = 'You can like only one file per hour';
-                    likeButton.onclick = () => showNotification('You can like only one file per hour', 'info');
+                    likeButton.title = 'Fap is on cooldown';
+                    likeButton.onclick = () => showNotification('Fap is on cooldown', 'info');
                 }
                 
                 // Добавляем hover эффекты
@@ -1156,7 +1156,7 @@
                     currentLikes = data.likes;
                     canLike = data.can_like;
                     updateLikeUI();
-                    showNotification('Liked successfully!', 'success');
+                    showNotification('Marked as fapped', 'success');
                 } else {
                     showNotification(data.error || 'Failed to like', 'error');
                 }
