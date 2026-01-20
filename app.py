@@ -14,7 +14,7 @@ IMAGE_FOLDER = os.path.join(BASE_DIR, 'static/images')
 ITEMS_PER_PAGE = 20
 
 # Файл для хранения лайков
-LIKES_FILE = os.path.join(BASE_DIR, 'likes.json')
+LIKES_FILE = '/var/www/gallery/likes.json'
 
 # Создаем папку если не существует
 os.makedirs(IMAGE_FOLDER, exist_ok=True)
@@ -476,5 +476,6 @@ def batch_likes():
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
