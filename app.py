@@ -8,7 +8,7 @@ app = Flask(__name__)
 
 # Абсолютный путь
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-IMAGE_FOLDER = os.path.join(BASE_DIR, r'C:\Users\callm\OneDrive\Indica\Site\v3\static\images')
+IMAGE_FOLDER = os.path.join(BASE_DIR, 'static/images')
 ITEMS_PER_PAGE = 20
 
 # Создаем папку если не существует
@@ -276,3 +276,4 @@ def api_filter():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
