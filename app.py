@@ -46,7 +46,7 @@ def can_like(ip_address):
     
     if ip_address in ip_timestamps:
         last_like_time = datetime.fromisoformat(ip_timestamps[ip_address])
-        if datetime.now() - last_like_time < timedelta(hours=1):
+        if datetime.now() - last_like_time < timedelta(minutes=5):
             return False
     return True
 
@@ -476,4 +476,5 @@ def batch_likes():
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
