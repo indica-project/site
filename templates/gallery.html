@@ -817,7 +817,7 @@
                     justify-content: center;
                     transition: all 0.3s;
                 ">
-                    💦
+                    ♡
                 </button>
                 
                 <!-- Кнопка шаринга -->
@@ -1090,14 +1090,14 @@
                     likeButton.innerHTML = '♡';
                     likeButton.style.color = '#ffffff';
                     likeButton.style.cursor = 'pointer';
-                    likeButton.title = 'Fapped';
+                    likeButton.title = 'Like this file';
                     likeButton.onclick = () => likeCurrentMedia();
                 } else {
-                    likeButton.innerHTML = '💦';
+                    likeButton.innerHTML = '♥';
                     likeButton.style.color = '#ff4757';
                     likeButton.style.cursor = 'not-allowed';
-                    likeButton.title = 'Fap is on cooldown...';
-                    likeButton.onclick = () => showNotification('Fap is on cooldown...', 'info');
+                    likeButton.title = 'You can like only one file per hour';
+                    likeButton.onclick = () => showNotification('You can like only one file per hour', 'info');
                 }
                 
                 // Добавляем hover эффекты
@@ -1135,7 +1135,7 @@
         // Функция лайка
         async function likeCurrentMedia() {
             if (!canLike) {
-                showNotification('Fap is on cooldown...', 'info');
+                showNotification('You can like only one file per hour', 'info');
                 return;
             }
             
@@ -1156,7 +1156,7 @@
                     currentLikes = data.likes;
                     canLike = data.can_like;
                     updateLikeUI();
-                    showNotification('Marked as fapped', 'success');
+                    showNotification('Liked successfully!', 'success');
                 } else {
                     showNotification(data.error || 'Failed to like', 'error');
                 }
